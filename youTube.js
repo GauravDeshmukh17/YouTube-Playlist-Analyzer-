@@ -30,9 +30,28 @@ browserOpenPromise
     })
     .then(function(name){
         console.log("PlaylistName : ",name);
+        let waitPromise=cTab.waitForSelector('div[id="info-container"] #info span');
+        return waitPromise;
+    })
+    .then(function(){
+        let dataPromise=cTab.evaluate(getViews,'div[id="info-container"] #info span');
+        return dataPromise;
+    })
+    .then(function(dataArr){
+        console.log("Views : ",dataArr[0]);
+        console.log("Years : ",dataArr[2]);
     })
 
     function getPlaylistName(selector){
         let name=document.querySelector(selector);
         return name.innerText;
+    }
+
+    function getViews(selector){
+        let data=document.querySelectorAll(selector);
+        let dataArr=[];
+        for(let i=0;i<data.length;i++){
+            dataArr.push(data[i].innerText);
+        }
+        return dataArr;
     }
