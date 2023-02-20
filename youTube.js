@@ -40,7 +40,24 @@ browserOpenPromise
     .then(function(dataArr){
         console.log("Views : ",dataArr[0]);
         console.log("Years : ",dataArr[2]);
+        let waitPromise=cTab.waitForSelector('.index-message.style-scope.ytd-playlist-panel-renderer span');
+        return waitPromise;
     })
+    .then(function(){
+        let totalVideosPromise=cTab.evaluate(getTotalVideos,'.index-message.style-scope.ytd-playlist-panel-renderer span');
+        return totalVideosPromise;
+    })
+    .then(function(totalVideos){
+        console.log("Total Videos : ",totalVideos);
+        let waitAndClickPromise=waitAndClick('span[title="DEAF KEV - Invincible [NCS Release]"]');
+        return waitAndClickPromise;
+    })
+    .then(function(){
+        console.log("Clicked on 3rd video");
+    })
+
+
+
 
     function getPlaylistName(selector){
         let name=document.querySelector(selector);
@@ -54,4 +71,26 @@ browserOpenPromise
             dataArr.push(data[i].innerText);
         }
         return dataArr;
+    }
+
+    function getTotalVideos(selector){
+        let total=document.querySelectorAll('.index-message.style-scope.ytd-playlist-panel-renderer span');
+        return total[2].innerText;
+    }
+
+    function waitAndClick(selector){
+        return new Promise(function(resolve,reject){
+            let waitPromise=cTab.waitForSelector(selector);
+            waitPromise
+                .then(function(){
+                    let clickPromise=cTab.click(selector);
+                    return clickPromise;
+                })
+                .then(function(){
+                    resolve();
+                })
+                .catch(function(err){
+                    reject(err);
+                })
+        })
     }
