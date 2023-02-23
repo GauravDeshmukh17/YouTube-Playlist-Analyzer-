@@ -15,45 +15,55 @@ browserOpenPromise
     })
     .then(function(allTabsArr){
         cTab=allTabsArr[0];
-        let youTubeVisitPromise=cTab.goto("https://www.youtube.com/watch?v=K4DyBUG242c&list=PLW-S5oymMexXTgRyT3BWVt_y608nt85Uj");
+        let youTubeVisitPromise=cTab.goto("https://www.youtube.com/playlist?list=PLW-S5oymMexXTgRyT3BWVt_y608nt85Uj");
         return youTubeVisitPromise;
     })
     .then(function(){
         console.log("YoTube visited");
-        let waitPromise=cTab.waitForSelector('h1[class="style-scope ytd-watch-metadata"]');
+        let waitPromise=cTab.waitForSelector('.style-scope.yt-dynamic-sizing-formatted-string.yt-sans-28');
         return waitPromise;
     })
     .then(function(){
         console.log("Wait done");
-        let namePromise=cTab.evaluate(getPlaylistName,'h1[class="style-scope ytd-watch-metadata"]');
+        let namePromise=cTab.evaluate(getPlaylistName,'.style-scope.yt-dynamic-sizing-formatted-string.yt-sans-28');
         return namePromise;
     })
     .then(function(name){
         console.log("PlaylistName : ",name);
-        let waitPromise=cTab.waitForSelector('div[id="info-container"] #info span');
+        let waitPromise=cTab.waitForSelector('.byline-item.style-scope.ytd-playlist-byline-renderer');
         return waitPromise;
     })
     .then(function(){
-        let dataPromise=cTab.evaluate(getViews,'div[id="info-container"] #info span');
+        let dataPromise=cTab.evaluate(getData,'.byline-item.style-scope.ytd-playlist-byline-renderer');
         return dataPromise;
     })
     .then(function(dataArr){
-        console.log("Views : ",dataArr[0]);
-        console.log("Years : ",dataArr[2]);
-        let waitPromise=cTab.waitForSelector('.index-message.style-scope.ytd-playlist-panel-renderer span');
-        return waitPromise;
+        // console.log(dataArr);
+        console.log("Total Videos : ",dataArr[0].split(" ")[0]);
+        console.log("Views : ",dataArr[1].split(" ")[0]);
+        console.log("Date : ",dataArr[2].split("on")[1]);
+        let currentPageVideoPromise=cTab.evaluate(curPageVideos);
+        return currentPageVideoPromise;
+    })
+    .then(function(length){
+        console.log(length);
+        let scrollToBottomPromise=scrollToBottom();
+        // while(778-length>20){
+        //     scrollToBottomPromise=scrollToBottomPromise.then(function(){
+        //         length=curPageVideos();
+        //         console.log(length);
+        //         return scrollToBottom();
+        //     })
+        // }
+        for(let i=0;i<1500;i++){
+            scrollToBottomPromise=scrollToBottomPromise.then(function(){
+                    return scrollToBottom();
+                })
+            }
+        return scrollToBottomPromise;
     })
     .then(function(){
-        let totalVideosPromise=cTab.evaluate(getTotalVideos,'.index-message.style-scope.ytd-playlist-panel-renderer span');
-        return totalVideosPromise;
-    })
-    .then(function(totalVideos){
-        console.log("Total Videos : ",totalVideos);
-        let waitAndClickPromise=waitAndClick('span[title="DEAF KEV - Invincible [NCS Release]"]');
-        return waitAndClickPromise;
-    })
-    .then(function(){
-        console.log("Clicked on 3rd video");
+        console.log("scroll done");
     })
 
 
@@ -64,7 +74,7 @@ browserOpenPromise
         return name.innerText;
     }
 
-    function getViews(selector){
+    function getData(selector){
         let data=document.querySelectorAll(selector);
         let dataArr=[];
         for(let i=0;i<data.length;i++){
@@ -73,9 +83,30 @@ browserOpenPromise
         return dataArr;
     }
 
-    function getTotalVideos(selector){
-        let total=document.querySelectorAll('.index-message.style-scope.ytd-playlist-panel-renderer span');
-        return total[2].innerText;
+
+    function curPageVideos(){
+        let curPageAllVideos=document.querySelectorAll('.style-scope.ytd-playlist-video-list-renderer');
+        return curPageAllVideos.length;
+    }
+
+    function scrollToBottom(){
+        return new Promise(function(resolve,reject){
+            function goToBottom(){
+                window.scrollBy(0,window.innerHeight);
+            }
+            let goToBottomPromise=cTab.evaluate(goToBottom);
+            goToBottomPromise
+                .then(function(){
+                    let wait10MilliSecPromise=cTab.waitForTimeout(10);
+                    return wait10MilliSecPromise;
+                })
+                .then(function(){
+                    resolve();
+                })
+                .catch(function(err){
+                    reject(err);
+                })
+        })
     }
 
     function waitAndClick(selector){
@@ -94,3 +125,4 @@ browserOpenPromise
                 })
         })
     }
+
