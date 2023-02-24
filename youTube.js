@@ -121,6 +121,13 @@ browserOpenPromise
         let data=JSON.stringify(arrOfObjects);
         fs.writeFileSync("playlist.json",data);
     
+        // creates new book
+        let newWorkBook=xlsx.utils.book_new();
+        // converts an array of JS objects to worksheet
+        let newWorkSheet=xlsx.utils.json_to_sheet(arrOfObjects);
+        // aapends worksheet to workbook
+        xlsx.utils.book_append_sheet(newWorkBook,newWorkSheet,"playlist");
+        xlsx.writeFile(newWorkBook,"playlist.xlsx");
     })
 
 
