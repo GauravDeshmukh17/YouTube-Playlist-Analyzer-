@@ -55,7 +55,7 @@ browserOpenPromise
         //         return scrollToBottom();
         //     })
         // }
-        for(let i=0;i<1500;i++){
+        for(let i=0;i<2000;i++){
             scrollToBottomPromise=scrollToBottomPromise.then(function(){
                     return scrollToBottom();
                 })
@@ -64,6 +64,51 @@ browserOpenPromise
     })
     .then(function(){
         console.log("scroll done");
+        let waitFor2Sec=cTab.waitForTimeout(2000);
+        return waitFor2Sec;
+    })
+    .then(function(){
+        console.log("wait done");
+        function getNameAndDuration(){
+            let dataElement=document.querySelectorAll('.style-scope.ytd-playlist-video-list-renderer');
+            // let durationElement=document.querySelectorAll('span[class="style-scope ytd-thumbnail-overlay-time-status-renderer"]',{delay:100000});
+            let videoDataArr=[];
+            for(let i=4;i<dataElement.length;i++){
+                let videoData=dataElement[i].innerText.split('\n');
+                // let videoDuation=durationElement[i].innerText;
+                videoDataArr.push(videoData);
+            }
+
+            return videoDataArr;
+        }
+
+        let videoDataArrPromise=cTab.evaluate(getNameAndDuration);
+        return videoDataArrPromise;
+    })
+    .then(function(videoDataArr){
+        // console.log(videoDataArr);
+        function fillDataInArrOfObject(videoDataArr){
+            let videoDataArrOfObjects=[];
+            for(let i=0;i<videoDataArr.length;i++){
+                let videoNumber=videoDataArr[i][0];
+                let videoDuration=videoDataArr[i][1];
+                let videoName=videoDataArr[i][3];
+                let videoViews=videoDataArr[i][6];
+                videoDataArrOfObjects.push({videoNumber,videoDuration,videoName,videoViews});
+                // console.log(videoNumber);
+                // console.log(videoDuration);
+                // console.log(videoName);
+                // console.log(videoViews);
+            }
+
+            return videoDataArrOfObjects;
+        }
+
+        let fillDataInArrOfObjectPromise=cTab.evaluate(fillDataInArrOfObject,videoDataArr,{delay:1000});
+        return fillDataInArrOfObjectPromise;
+    })
+    .then(function(arrOfObjects){
+        console.log(arrOfObjects);
     })
 
 
