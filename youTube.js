@@ -111,20 +111,26 @@ browserOpenPromise
         return fillDataInArrOfObjectPromise;
     })
     .then(function(arrOfObjects){
-        console.log(arrOfObjects);
+        let selector=`a[title="`+arrOfObjects[9].videoName+`"]`;
+        let waitPromise=waitAndClick(selector);
+        let data= {waitPromise,arrOfObjects};
+        return data;
+    })
+    .then(function(data){
+        console.log(data.arrOfObjects);
 
         let pdfDoc=new pdf;
         pdfDoc.pipe(fs.createWriteStream("playlist.pdf"));
-        pdfDoc.text(JSON.stringify(arrOfObjects));
+        pdfDoc.text(JSON.stringify(data.arrOfObjects));
         pdfDoc.end();
 
-        let data=JSON.stringify(arrOfObjects);
-        fs.writeFileSync("playlist.json",data);
+        let jsonData=JSON.stringify(data.arrOfObjects);
+        fs.writeFileSync("playlist.json",jsonData);
     
         // creates new book
         let newWorkBook=xlsx.utils.book_new();
         // converts an array of JS objects to worksheet
-        let newWorkSheet=xlsx.utils.json_to_sheet(arrOfObjects);
+        let newWorkSheet=xlsx.utils.json_to_sheet(data.arrOfObjects);
         // aapends worksheet to workbook
         xlsx.utils.book_append_sheet(newWorkBook,newWorkSheet,"playlist");
         xlsx.writeFile(newWorkBook,"playlist.xlsx");
