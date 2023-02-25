@@ -110,30 +110,64 @@ browserOpenPromise
         let fillDataInArrOfObjectPromise=cTab.evaluate(fillDataInArrOfObject,videoDataArr,{delay:1000});
         return fillDataInArrOfObjectPromise;
     })
+    // .then(function(arrOfObjects){
+    //     let inputArr=process.argv.slice(2);
+    //     console.log(inputArr);
+    //     let idx=parseInt(inputArr[0])-1;
+    //     let selector=`a[title="`+arrOfObjects[idx].videoName+`"]`;
+    //     let waitPromise=waitAndClick(selector);
+    //     let data= {waitPromise,arrOfObjects};
+    //     return data;
+    // })
     .then(function(arrOfObjects){
-        let inputArr=process.argv.slice(2);
-        console.log(inputArr);
-        let idx=parseInt(inputArr[0])-1;
-        let selector=`a[title="`+arrOfObjects[idx].videoName+`"]`;
-        let waitPromise=waitAndClick(selector);
-        let data= {waitPromise,arrOfObjects};
+        function getAllVideosLinks(){
+            let linksArr=[];
+            let anchorElement=document.querySelectorAll('a[class="yt-simple-endpoint style-scope ytd-playlist-video-renderer"]',{delay:1000});
+            for(let i=0;i<anchorElement.length;i++){
+                linksArr.push(anchorElement[i].getAttribute('href'));
+            }
+
+            return linksArr;
+        }
+
+        let getAllVideosLinksPromise=cTab.evaluate(getAllVideosLinks);
+        let data={getAllVideosLinksPromise,arrOfObjects};
         return data;
     })
     .then(function(data){
-        console.log(data.arrOfObjects);
+        let allVideosVisitPromise=data.getAllVideosLinksPromise.then(function(links){
+            console.log(links);
+            let fullLink="https://www.youtube.com"+links[0];
+            let visitVideoPromise=cTab.goto(fullLink);
+            for(let i=1;i<links.length;i++){
+                visitVideoPromise=visitVideoPromise.then(function(){
+                    fullLink="https://www.youtube.com"+links[i];
+                    return goToLink(fullLink);
+                })
+            }
+
+            return visitVideoPromise;
+        });
+
+        let data1={allVideosVisitPromise,data};
+        return data1;
+    })
+    .then(function(data1){
+        let data2=data1.data;
+        console.log(data2.arrOfObjects);
 
         let pdfDoc=new pdf;
         pdfDoc.pipe(fs.createWriteStream("playlist.pdf"));
-        pdfDoc.text(JSON.stringify(data.arrOfObjects));
+        pdfDoc.text(JSON.stringify(data2.arrOfObjects));
         pdfDoc.end();
 
-        let jsonData=JSON.stringify(data.arrOfObjects);
+        let jsonData=JSON.stringify(data2.arrOfObjects);
         fs.writeFileSync("playlist.json",jsonData);
     
         // creates new book
         let newWorkBook=xlsx.utils.book_new();
         // converts an array of JS objects to worksheet
-        let newWorkSheet=xlsx.utils.json_to_sheet(data.arrOfObjects);
+        let newWorkSheet=xlsx.utils.json_to_sheet(data2.arrOfObjects);
         // aapends worksheet to workbook
         xlsx.utils.book_append_sheet(newWorkBook,newWorkSheet,"playlist");
         xlsx.writeFile(newWorkBook,"playlist.xlsx");
@@ -196,5 +230,26 @@ browserOpenPromise
                 .catch(function(err){
                     reject(err);
                 })
+        })
+    }
+
+    function goToLink(url){
+        return new Promise(function(resolve,reject){
+            let waitPromise=cTab.waitForTimeout(30000);
+        waitPromise
+            .then(function(){
+                let visitUrl=cTab.goto(url);
+                return visitUrl;
+            })
+            .then(function(){
+                let waitAndClickPromise=waitAndClick('button[aria-keyshortcuts="k"]');
+                return waitAndClickPromise;
+            })
+            .then(function(){
+                resolve();
+            })
+            .catch(function(err){
+                reject(err);
+            })
         })
     }
