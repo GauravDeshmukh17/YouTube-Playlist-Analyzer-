@@ -58,7 +58,7 @@ browserOpenPromise
         //         return scrollToBottom();
         //     })
         // }
-        for(let i=0;i<1000;i++){
+        for(let i=0;i<500;i++){
             scrollToBottomPromise=scrollToBottomPromise.then(function(){
                     return scrollToBottom();
                 })
@@ -141,7 +141,7 @@ browserOpenPromise
             console.log(inputLiksArr);
             
             let fullLink="https://www.youtube.com"+links[parseInt(inputLiksArr[0])-1];
-            let visitVideoPromise=cTab.goto(fullLink);
+            let visitVideoPromise=goToLink(fullLink);
             for(let i=1;i<inputLiksArr.length;i++){
                 visitVideoPromise=visitVideoPromise.then(function(){
                     fullLink="https://www.youtube.com"+links[parseInt(inputLiksArr[i])-1];
