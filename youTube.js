@@ -4,6 +4,8 @@ const fs=require("fs");
 const xlsx=require("xlsx");
 
 let cTab;
+let globalArrOfObjects;
+let links;
 
 let browserOpenPromise=puppeteer.launch({
     headless:false,
@@ -120,6 +122,8 @@ browserOpenPromise
     //     return data;
     // })
     .then(function(arrOfObjects){
+        globalArrOfObjects=arrOfObjects;
+        console.log(globalArrOfObjects);
         function getAllVideosLinks(){
             let linksArr=[];
             let anchorElement=document.querySelectorAll('a[class="yt-simple-endpoint style-scope ytd-playlist-video-renderer"]',{delay:1000});
@@ -131,52 +135,47 @@ browserOpenPromise
         }
 
         let getAllVideosLinksPromise=cTab.evaluate(getAllVideosLinks);
-        let data={getAllVideosLinksPromise,arrOfObjects};
-        return data;
+        return getAllVideosLinksPromise;
     })
-    .then(function(data){
-        let allVideosVisitPromise=data.getAllVideosLinksPromise.then(function(links){
-            console.log(links);
-            let inputLiksArr=process.argv.slice(2);
-            console.log(inputLiksArr);
-            
-            let fullLink="https://www.youtube.com"+links[parseInt(inputLiksArr[0])-1];
-            let visitVideoPromise=goToLink(fullLink);
-            for(let i=1;i<inputLiksArr.length;i++){
-                visitVideoPromise=visitVideoPromise.then(function(){
-                    fullLink="https://www.youtube.com"+links[parseInt(inputLiksArr[i])-1];
-                    return goToLink(fullLink);
-                })
-            }
-
-            return visitVideoPromise;
-        });
-
-        let data1={allVideosVisitPromise,data};
-        return data1;
-    })
-    .then(function(data1){
-        let data2=data1.data;
-        console.log(data2.arrOfObjects);
+    .then(function(linksArr){
+        links=linksArr;
+        console.log(links);
 
         let pdfDoc=new pdf;
         pdfDoc.pipe(fs.createWriteStream("playlist.pdf"));
-        pdfDoc.text(JSON.stringify(data2.arrOfObjects));
+        pdfDoc.text(JSON.stringify(globalArrOfObjects));
         pdfDoc.end();
 
-        let jsonData=JSON.stringify(data2.arrOfObjects);
+        let jsonData=JSON.stringify(globalArrOfObjects);
         fs.writeFileSync("playlist.json",jsonData);
     
         // creates new book
         let newWorkBook=xlsx.utils.book_new();
         // converts an array of JS objects to worksheet
-        let newWorkSheet=xlsx.utils.json_to_sheet(data2.arrOfObjects);
+        let newWorkSheet=xlsx.utils.json_to_sheet(globalArrOfObjects);
         // aapends worksheet to workbook
         xlsx.utils.book_append_sheet(newWorkBook,newWorkSheet,"playlist");
         xlsx.writeFile(newWorkBook,"playlist.xlsx");
+
+        let wait1SecPromise=cTab.waitForTimeout(1000);
+        return wait1SecPromise;
     })
+    .then(function(){
+        let inputLiksArr=process.argv.slice(2);
+        console.log(inputLiksArr);
+            
+        let fullLink="https://www.youtube.com"+links[parseInt(inputLiksArr[0])-1];
+        let visitVideoPromise=goToLink(fullLink);
+        for(let i=1;i<inputLiksArr.length;i++){
+            visitVideoPromise=visitVideoPromise.then(function(){
+                fullLink="https://www.youtube.com"+links[parseInt(inputLiksArr[i])-1];
+                return goToLink(fullLink);
+            })
+        }
 
-
+        return visitVideoPromise;
+    })
+    
 
 
     function getPlaylistName(selector){
