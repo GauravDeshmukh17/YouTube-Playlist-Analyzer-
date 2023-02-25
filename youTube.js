@@ -238,21 +238,22 @@ browserOpenPromise
 
     function goToLink(url){
         return new Promise(function(resolve,reject){
-            let waitPromise=cTab.waitForTimeout(30000);
-        waitPromise
-            .then(function(){
-                let visitUrl=cTab.goto(url);
-                return visitUrl;
-            })
-            .then(function(){
-                let waitAndClickPromise=waitAndClick('button[aria-keyshortcuts="k"]');
-                return waitAndClickPromise;
-            })
-            .then(function(){
-                resolve();
-            })
-            .catch(function(err){
-                reject(err);
-            })
-        })
-    }
+
+            let visitUrl=cTab.goto(url);
+            visitUrl
+                .then(function(){
+                    let waitAndClickPromise=waitAndClick('button[aria-keyshortcuts="k"]');
+                    return waitAndClickPromise;
+                })
+                .then(function(){
+                    let waitPromise=cTab.waitForTimeout(30000);
+                    return waitPromise;
+                })
+                .then(function(){
+                    resolve();
+                })
+                .catch(function(err){
+                    reject(err);
+                })
+            });
+        }
