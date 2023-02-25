@@ -58,7 +58,7 @@ browserOpenPromise
         //         return scrollToBottom();
         //     })
         // }
-        for(let i=0;i<700;i++){
+        for(let i=0;i<1000;i++){
             scrollToBottomPromise=scrollToBottomPromise.then(function(){
                     return scrollToBottom();
                 })
@@ -137,11 +137,14 @@ browserOpenPromise
     .then(function(data){
         let allVideosVisitPromise=data.getAllVideosLinksPromise.then(function(links){
             console.log(links);
-            let fullLink="https://www.youtube.com"+links[0];
+            let inputLiksArr=process.argv.slice(2);
+            console.log(inputLiksArr);
+            
+            let fullLink="https://www.youtube.com"+links[parseInt(inputLiksArr[0])-1];
             let visitVideoPromise=cTab.goto(fullLink);
-            for(let i=1;i<links.length;i++){
+            for(let i=1;i<inputLiksArr.length;i++){
                 visitVideoPromise=visitVideoPromise.then(function(){
-                    fullLink="https://www.youtube.com"+links[i];
+                    fullLink="https://www.youtube.com"+links[parseInt(inputLiksArr[i])-1];
                     return goToLink(fullLink);
                 })
             }
