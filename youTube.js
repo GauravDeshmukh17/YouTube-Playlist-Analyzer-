@@ -58,7 +58,7 @@ browserOpenPromise
         //         return scrollToBottom();
         //     })
         // }
-        for(let i=0;i<2000;i++){
+        for(let i=0;i<700;i++){
             scrollToBottomPromise=scrollToBottomPromise.then(function(){
                     return scrollToBottom();
                 })
@@ -111,7 +111,10 @@ browserOpenPromise
         return fillDataInArrOfObjectPromise;
     })
     .then(function(arrOfObjects){
-        let selector=`a[title="`+arrOfObjects[9].videoName+`"]`;
+        let inputArr=process.argv.slice(2);
+        console.log(inputArr);
+        let idx=parseInt(inputArr[0])-1;
+        let selector=`a[title="`+arrOfObjects[idx].videoName+`"]`;
         let waitPromise=waitAndClick(selector);
         let data= {waitPromise,arrOfObjects};
         return data;
